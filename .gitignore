@@ -1,0 +1,11 @@
+node_modules/
+.env*
+config.json
+*.log
+installed.json*
+backups/
+*.original
+candidate-*.mjs
+coverage/
+*.tmp
+catalog.json

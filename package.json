@@ -1,0 +1,20 @@
+{
+  "name": "cursor-gemini-link",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Experimental patch that adds the models of your Antigravity plan (Gemini 4 Argon and more) to Cursor through the official Antigravity CLI",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "check": "node install.mjs --check",
+    "install:patch": "node install.mjs",
+    "restore": "node install.mjs --restore",
+    "verify": "node scripts/verify-build.mjs",
+    "derive-symbols": "node scripts/derive-symbols.mjs",
+    "install:remote": "node scripts/install-remote.mjs"
+  }
+}
