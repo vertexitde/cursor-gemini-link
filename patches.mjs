@@ -5,6 +5,7 @@ import {patchConversationActionsWorkbench, patchConversationActionsRuntime} from
 import {patchSubagentModel} from './subagent-model.mjs';
 import {patchSubagentSettingsWorkbench, patchSubagentSettingsRuntime} from './subagent-settings.mjs';
 import {patchMaxMode} from './max-mode.mjs';
+import {patchAgentHost} from './agent-host.mjs';
 import {pickerModels, prefix} from './models.mjs';
 
 const escapeRegex = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -86,7 +87,7 @@ export function patchWorkbench(source, surface, symbols, config, catalog, {remot
   source = patchMaxMode(patchSubagentSettingsWorkbench(source));
   source = patchSubagentBubbles(source, surface, s);
   source = patchSubagentLifecycle(source, surface, prefix, s);
-  source = patchConversationActionsWorkbench(source, surface, prefix);
+  source = patchAgentHost(patchConversationActionsWorkbench(source, surface, prefix));
   return source;
 }
 

@@ -13,7 +13,8 @@ import {patchWorkbench, patchRuntime, providerConfigBranch, antigravityReasoning
 import {pickerSectionHelpersSrc} from '../picker-sections.mjs';
 import {prefix, providerModels} from '../models.mjs';
 import {sampleCatalog} from './checks/sample-models.mjs';
-import {supportedVersions, isTunnelled} from '../build-support.mjs';
+import {supportedVersions, isTunnelled, atLeast} from '../build-support.mjs';
+import {verifyAgentHost} from './checks/agent-host-check.mjs';
 import {verifyConversationActionsWorkbench, verifyConversationActionsRuntime} from './checks/conversation-actions-check.mjs';
 import {verifySubagentLifecycle} from './checks/subagent-lifecycle-check.mjs';
 import {verifySubagentRegistration} from './checks/subagent-registration-check.mjs';
@@ -131,6 +132,7 @@ async function scenario(label, dir) {
     const content = patchWorkbench(fs.readFileSync(files[surface], 'utf8'), surface, symbols[surface], config, sampleCatalog, {remoteTunnel});
     syntax(`${label}-${surface}`, content);
     verifyWorkbenchWiring(content, surface);
+    if (atLeast(version, '3.24.12')) verifyAgentHost(content);
     await verifyProviderConfig(content);
     console.log(`${label} ${surface}: syntax, unique anchors, picker and provider configuration passed.`);
     verifyMaxMode(content);
