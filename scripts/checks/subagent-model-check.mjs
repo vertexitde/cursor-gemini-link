@@ -27,7 +27,7 @@ export async function verifySubagentModels(source) {
   ...(speed?{[speed[1]]:'fast',[speed[2]]:'auto'}:{}),
   ...(shims?{[shims[1]]:class{report(){}flush(){}}}:{}),
   ...(routes?{[routes[1]]:new Proxy({},{get:()=>({})})}:{}),
-  __normalizeClaudeSubagentModel:identity,__normalizeChatgptSubagentModel:identity,__normalizeAntigravitySubagentModel:normalizeAntigravitySubagentModel};
+  __normalizeClaudeSubagentModel:identity,__normalizeChatgptSubagentModel:identity,__normalizeMercurySubagentModel:identity,__normalizeAntigravitySubagentModel:normalizeAntigravitySubagentModel};
  const make=values=>new Function(...Object.keys(values),'return ('+body+')')(...Object.values(values));
  const resolve=make(vars),parent='antigravity/gemini-4-argon';
  const options={subagentConfig:{subagent_type:'generalPurpose'},requestedModel:'',parentModelId:parent,parentMaxMode:false,

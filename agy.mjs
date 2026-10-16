@@ -159,28 +159,42 @@ export async function infer(agy, body, catalog, {signal, spawnProcess = spawn} =
     fs.writeFileSync(schemaPath, JSON.stringify(request.schema));
     const args = ['--model', request.slug, '--input-format', 'stream-json', '--output-format', 'stream-json',
       '--json-schema', schemaPath, '--disable-slash-commands', '--sandbox', '-p', ''];
-    const stdout = await new Promise((resolve, reject) => {
-      const child = spawnProcess(agy, args, {cwd:workspace, windowsHide:true});
-      let out = '', err = '';
-      const stop = () => child.kill();
-      signal?.addEventListener('abort', stop, {once:true});
-      child.stdout.on('data', chunk => { out += chunk; });
-      child.stderr.on('data', chunk => { err = (err + chunk).slice(-4000); });
-      child.on('error', error => reject(new AgyError(502, 'Could not start the Antigravity CLI: ' + error.message, 'agy_start_failed')));
-      child.on('close', code => {
-        signal?.removeEventListener('abort', stop);
-        if (signal?.aborted) return reject(Object.assign(new Error('aborted'), {name:'AbortError'}));
-        if (code !== 0 && !out.includes('"event":"result"')) return reject(new AgyError(502, `Antigravity CLI exited with ${code}: ${err.trim().slice(-500)}`, 'agy_exit'));
-        resolve(out);
-      });
-      child.stdin.on('error', () => {});
-      child.stdin.end(JSON.stringify({event:'user', message:{role:'user', content:[{type:'text', text:request.prompt}]}}) + '\n');
-    });
+    const input = JSON.stringify({event:'user', message:{role:'user', content:[{type:'text', text:request.prompt}]}}) + '\n';
+    // agy replaces its own binary when it updates, so a start can miss it for
+    // a moment; one more try after a short wait covers that.
+    let stdout;
+    for (let attempt = 1; ; attempt++) {
+      try { stdout = await runAgy(agy, args, workspace, input, signal, spawnProcess); break; }
+      catch (error) {
+        if (error.code !== 'agy_start_failed' || attempt === 2) throw error;
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
+    }
     const {answer, usage} = parseEvents(stdout);
     return {answer:validateAnswer(answer, request, body), usage, slug:request.slug};
   } finally {
     fs.rmSync(workspace, {recursive:true, force:true});
   }
+}
+
+function runAgy(agy, args, workspace, input, signal, spawnProcess) {
+  return new Promise((resolve, reject) => {
+    const child = spawnProcess(agy, args, {cwd:workspace, windowsHide:true});
+    let out = '', err = '';
+    const stop = () => child.kill();
+    signal?.addEventListener('abort', stop, {once:true});
+    child.stdout.on('data', chunk => { out += chunk; });
+    child.stderr.on('data', chunk => { err = (err + chunk).slice(-4000); });
+    child.on('error', error => reject(new AgyError(502, `Could not start the Antigravity CLI: ${error.message} (binary ${fs.existsSync(agy) ? 'present' : 'missing'}, working folder ${fs.existsSync(workspace) ? 'present' : 'missing'})`, 'agy_start_failed')));
+    child.on('close', code => {
+      signal?.removeEventListener('abort', stop);
+      if (signal?.aborted) return reject(Object.assign(new Error('aborted'), {name:'AbortError'}));
+      if (code !== 0 && !out.includes('"event":"result"')) return reject(new AgyError(502, `Antigravity CLI exited with ${code}: ${err.trim().slice(-500)}`, 'agy_exit'));
+      resolve(out);
+    });
+    child.stdin.on('error', () => {});
+    child.stdin.end(input);
+  });
 }
 
 export const newCallId = () => 'call_' + crypto.randomBytes(12).toString('hex');
