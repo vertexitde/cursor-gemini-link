@@ -2,7 +2,7 @@
 
 An experimental patch that adds the models of your Google Antigravity plan to Cursor: **Gemini 4 Argon**, **Gemini 4 Neon**, **Gemini 4 Hydrogen**, the Antigravity orchestrators, Gemini 3.8 Flash, and whatever else `agy models` lists for your account (on a Pro plan in October 2026 also Claude Opus 5.5, Claude Sonnet 5.5 and GPT-OSS 120B). The models are run by Google's official Antigravity CLI (`agy`), signed in with your own account. Cursor keeps its agent harness, tools and approval controls. No extension is installed.
 
-Companion projects: [cursor-gpt-link](https://github.com/vertexitde/cursor-gpt-link), [cursor-claude-link](https://github.com/vertexitde/cursor-claude-link) and [cursor-mercury-link](https://github.com/vertexitde/cursor-mercury-link). All four can be installed together.
+Companion projects: [cursor-gpt-link](https://github.com/vertexitde/cursor-gpt-link), [cursor-claude-link](https://github.com/vertexitde/cursor-claude-link), [cursor-mercury-link](https://github.com/vertexitde/cursor-mercury-link) and [cursor-kimi-link](https://github.com/vertexitde/cursor-kimi-link). All five can be installed together, in the order ChatGPT, Claude, Mercury, Gemini, Kimi; remove them in reverse.
 
 ## Status
 
