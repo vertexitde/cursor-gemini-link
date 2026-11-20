@@ -2,7 +2,8 @@ import fs from 'node:fs';
 import {modelTooltip} from './model-tooltip.mjs';
 
 export const prefix = 'antigravity/';
-export const efforts = ['low', 'medium', 'high'];
+// XHigh arrived with Gemini 4 Neon and Hydrogen in November 2026.
+export const efforts = ['low', 'medium', 'high', 'xhigh'];
 export const defaultEffort = 'medium';
 
 // `agy models` lists one slug per reasoning effort ("gemini-4-argon-low",
@@ -18,9 +19,9 @@ export function parseModelList(text) {
   }
   const grouped = new Map();
   for (const {slug, label} of rows) {
-    const match = slug.match(/^(.*)-(low|medium|high)$/);
+    const match = slug.match(/^(.*)-(xhigh|low|medium|high)$/);
     const base = match ? match[1] : slug, effort = match?.[2];
-    const name = label.replace(/\s*\((Low|Medium|High)\)$/, '').trim() || base;
+    const name = label.replace(/\s*\((Low|Medium|High|XHigh)\)$/i, '').trim() || base;
     const model = grouped.get(base) ?? {id:base, name, slugs:{}};
     if (effort) model.slugs[effort] = slug; else model.slugs.default = slug;
     grouped.set(base, model);
@@ -38,7 +39,9 @@ export function limitsFor(id) {
 }
 
 function summaryFor(id, name) {
+  if (/^gemini-pro-orchestrator/.test(id)) return 'Antigravity\'s orchestrator: plans and coordinates longer tasks itself, slower per step than the plain models.';
   if (/^gemini-4-argon/.test(id)) return 'Google\'s frontier model in Antigravity: long-horizon agentic coding with a 1M token window.';
+  if (/^gemini-4-(neon|hydrogen)/.test(id)) return 'Gemini 4 through your Antigravity plan, with efforts up to Very high and a 1M token window.';
   if (/^gemini-[\d.]+-flash/.test(id)) return 'Fast Gemini model through Antigravity for everyday edits and quick answers.';
   if (/^claude-opus/.test(id)) return 'Claude Opus through your Antigravity plan, for complex reasoning and architecture work.';
   if (/^claude-sonnet/.test(id)) return 'Claude Sonnet through your Antigravity plan, a versatile choice for everyday coding.';
@@ -56,8 +59,9 @@ export const defaultEffortOf = model => {
 // effort, or its default effort when none was chosen or it is not offered.
 export function slugFor(model, effort) {
   if (model.slugs.default) return model.slugs.default;
-  const aliases = {none:'low', minimal:'low', instant:'low', xhigh:'high', max:'high'};
-  const wanted = aliases[effort] ?? effort;
+  // The closest effort the model offers, highest first for the top settings.
+  const candidates = {none:['low'], minimal:['low'], instant:['low'], max:['xhigh', 'high'], xhigh:['xhigh', 'high']}[effort] ?? [effort];
+  const wanted = candidates.find(candidate => model.slugs[candidate]);
   return model.slugs[wanted] ?? model.slugs[defaultEffortOf(model)];
 }
 
@@ -68,7 +72,7 @@ const antigravityIcon = fs.readFileSync(new URL('./antigravity.svg', import.meta
   .replace(/^<svg ([^>]*)>/, (_, attributes) => '<svg ' + attributes.replace(/\s*(?:width|height|style)="[^"]*"/g, '') +
     ' width="12" height="12" aria-hidden="true" style="display:inline-block;vertical-align:-2px;margin-right:6px;flex:none">');
 
-const effortName = value => value[0].toUpperCase() + value.slice(1);
+const effortName = value => value === 'xhigh' ? 'Very high' : value[0].toUpperCase() + value.slice(1);
 const escape = value => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 
 export function findModel(catalog, id) {
@@ -87,7 +91,7 @@ export function pickerModels(catalog) {
       namedModelSectionIndex:0, vendorName:'google', vendor:{id:0, displayName:'Antigravity'},
       modelPickerBadges:[], cloudAgentEffortModes:[], tagline:model.summary, tooltipData:tooltip(chosen),
       parameterDefinitions:available.length ? [{id:'reasoning', name:'Effort', isCycleableByHotkey:true,
-        markdownTooltip:'How long the model thinks before answering. Low answers fastest; High spends the most thinking on multi-step problems.',
+        markdownTooltip:'How long the model thinks before answering. Low answers fastest; High, or Very high where offered, spends the most thinking on multi-step problems.',
         parameterType:{enumParameter:{values:available.map(value => ({value, displayName:effortName(value), modelPickerBadges:[]}))}}}] : [],
       variants:(available.length ? available : [undefined]).map(effort => ({
         parameterValues:effort ? [{id:'reasoning', value:effort}] : [],

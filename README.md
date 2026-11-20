@@ -1,6 +1,6 @@
 # cursor-gemini-link
 
-An experimental patch that adds the models of your Google Antigravity plan to Cursor: **Gemini 4 Argon**, Gemini 3.8 Flash, and whatever else `agy models` lists for your account (on a Pro plan in October 2026 also Claude Opus 5.5, Claude Sonnet 5.5 and GPT-OSS 120B). The models are run by Google's official Antigravity CLI (`agy`), signed in with your own account. Cursor keeps its agent harness, tools and approval controls. No extension is installed.
+An experimental patch that adds the models of your Google Antigravity plan to Cursor: **Gemini 4 Argon**, **Gemini 4 Neon**, **Gemini 4 Hydrogen**, the Antigravity orchestrators, Gemini 3.8 Flash, and whatever else `agy models` lists for your account (on a Pro plan in October 2026 also Claude Opus 5.5, Claude Sonnet 5.5 and GPT-OSS 120B). The models are run by Google's official Antigravity CLI (`agy`), signed in with your own account. Cursor keeps its agent harness, tools and approval controls. No extension is installed.
 
 Companion projects: [cursor-gpt-link](https://github.com/vertexitde/cursor-gpt-link), [cursor-claude-link](https://github.com/vertexitde/cursor-claude-link) and [cursor-mercury-link](https://github.com/vertexitde/cursor-mercury-link). All four can be installed together.
 
@@ -9,17 +9,17 @@ Companion projects: [cursor-gpt-link](https://github.com/vertexitde/cursor-gpt-l
 | Item | Current status |
 | --- | --- |
 | Client platform | Windows x64 |
-| Supported Cursor | 3.25.9, commit `5d4df965746c5d09740842fc0f1331ba1c157830`; 3.24.12, commit `37b865941ccb31e2fc90c685157534efca87f960` |
+| Supported Cursor | 3.31.12, commit `61ea52f088708259885abd9a37eafec994cd5db0`; 3.25.9, commit `5d4df965746c5d09740842fc0f1331ba1c157830`; 3.24.12, commit `37b865941ccb31e2fc90c685157534efca87f960` |
 | Antigravity CLI | `agy` 1.4.0, signed in with a personal Google account |
 | Models | Read from `agy models` at install time and again whenever the bridge starts |
 | Through `agy`, verified live on October 16, 2026 | Gemini 4 Argon at Low, Medium and High; structured tool calls; a full tool round trip; images through the working folder |
-| Automated checks | Unit tests, and Cursor's extracted code with the patch applied on the original 3.25.9 and 3.24.12 bundles |
+| Automated checks | Unit tests, and Cursor's extracted code with the patch applied on the original 3.31.12, 3.25.9 and 3.24.12 bundles |
 | Combined install | On top of cursor-gpt-link, cursor-claude-link and cursor-mercury-link; see [testing notes](docs/testing.md) |
 | In-app use | Not yet confirmed in the Cursor UI |
 
 ## What it adds
 
-**Antigravity** appears as its own section in the model picker, below the companion sections when those are installed. Each model carries the Antigravity mark and offers **Effort** with the levels `agy` lists for it: Low, Medium (default) and High for Gemini 4 Argon, Gemini 3.8 Flash and the Claude models; GPT-OSS 120B has a single level. Gemini 4 Argon reports its 1M token window to Cursor.
+**Antigravity** appears as its own section in the model picker, below the companion sections when those are installed. Each model carries the Antigravity mark and offers **Effort** with the levels `agy` lists for it: Low, Medium (default) and High for Gemini 4 Argon, Gemini 3.8 Flash and the Claude models, and also Very high (`xhigh`) for Gemini 4 Neon and Hydrogen; GPT-OSS 120B and the orchestrators have a single level. Gemini 4 Argon reports its 1M token window to Cursor.
 
 There is nothing to configure in Cursor: `agy` uses your Antigravity sign-in.
 

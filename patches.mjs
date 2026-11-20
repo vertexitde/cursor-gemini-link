@@ -71,7 +71,7 @@ export function patchWorkbench(source, surface, symbols, config, catalog, {remot
     source = once(source, s.runAnchor, s.runAnchor
       .replace('{const ', `{const __antigravityLocal=__isAntigravityModel(${requested});const `)
       .replace(`localMode:${local}.localMode})`, `localMode:${local}.localMode||__antigravityLocal})`)
-      .replace(`if(${local}.localMode){`, `if(${local}.localMode||__antigravityLocal){`));
+      .replace(`${local}.localMode){`, `${local}.localMode||__antigravityLocal){`));
   }
   // Remote SSH: builds up to 3.22.5 kept the agent in the dedicated UI runtime
   // so the bridge stayed reachable. That runtime resolves paths with the

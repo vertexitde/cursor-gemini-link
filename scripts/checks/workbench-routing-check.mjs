@@ -25,8 +25,17 @@ export async function verifyWorkbenchRouting(source, prefix='antigravity/', {rem
   const trim=method.match(/([\w$]+)\([\w$]+\.requestedModel\?\.modelId\)/)[1];
   const binary=method.match(/defaultModel:([\w$]+)\.wrap/)[1];
   const setting=method.match(/([\w$]+)\(this.storageService,"useDedicatedLocalAgentRuntimeHost"\)/)[1];
-  const factory = new Function('__ChatgptSelectedModelIds','__ClaudeSelectedModelIds','__MercurySelectedModelIds','__AntigravitySelectedModelIds','__useChatgptDedicatedRuntime','__isClaudeBridgeModel','__isMercuryModel','__isAntigravityModel',trim,binary,setting,
-    'return ({' + method + '}).runLocalAgentInExtensionHost;');
+  // From 3.31 a failure is wrapped in Cursor's own error type; the check sees it unwrapped.
+  const wrap=method.match(/throw ([\w$]+)\([\w$]+,\{modelId:/)?.[1]??'__nativeErrorWrapper';
+  // The roles under test are passed in; every other helper the method reaches
+  // for (new ones arrive with each build) resolves to an inert stub.
+  const names=['__ChatgptSelectedModelIds','__ClaudeSelectedModelIds','__MercurySelectedModelIds','__AntigravitySelectedModelIds','__useChatgptDedicatedRuntime','__isClaudeBridgeModel','__isMercuryModel','__isAntigravityModel',trim,binary,setting,wrap];
+  const stub=new Proxy(function(){},{get:(target,key)=>key==='localMode'?false:key==='then'||typeof key==='symbol'?undefined:stub,apply:()=>undefined});
+  const factory=(...values)=>{
+    const known=Object.fromEntries(names.map((name,i)=>[name,values[i]]));
+    const scope=new Proxy(known,{has:()=>true,get:(target,key)=>key===Symbol.unscopables?undefined:key in target?target[key]:key in globalThis?globalThis[key]:stub});
+    return new Function('__scope','with(__scope){return ({'+method+'}).runLocalAgentInExtensionHost}')(scope);
+  };
   for (const [modelId, authority, nativeSetting, expected] of [
     [prefix+'gemini-4-argon', 'ssh-remote+test-host', false, remoteRoute],
     [prefix+'gemini-4-argon', undefined, false, 'workspace'],
@@ -35,7 +44,7 @@ export async function verifyWorkbenchRouting(source, prefix='antigravity/', {rem
   ]) {
     const route = factory(injected('__ChatgptSelectedModelIds'),injected('__ClaudeSelectedModelIds'),injected('__MercurySelectedModelIds'),injected('__AntigravitySelectedModelIds'),
       (model,remote)=>model.startsWith('chatgpt-codex/')&&Boolean(remote),model=>model.startsWith('claude-subscription/'),model=>typeof model==='string'&&model.startsWith('inception-mercury/'),model=>typeof model==='string'&&model.startsWith(prefix),
-      identity,{wrap:identity},()=>nativeSetting);
+      identity,{wrap:identity},()=>nativeSetting,identity);
     const calls = [];
     const provider = {waitForProviderRegistration:async () => calls.push('registered'),
       runLocalAgent:async (...args) => calls.push(['workspace', ...args])};
@@ -45,7 +54,7 @@ export async function verifyWorkbenchRouting(source, prefix='antigravity/', {rem
       logService:{info() {}, warn() {}}, agentExecProviderService:provider,
       productService:{version:'synthetic', urlProtocol:'synthetic'},
       cursorAuthenticationService:{granularPrivacyModeRawEnum:() => 0},
-      experimentService:{checkFeatureGate:() => false},
+      experimentService:{checkFeatureGate:() => false, checkFeatureGateIfEvaluated:() => undefined},
       workspaceContextService:{getWorkspace:() => ({folders:[]})},
       environmentService:{remoteAuthority:authority}, storageService:{},
       runLocalAgentInDedicatedExtensionHost:async (...args) => calls.push(['dedicated', ...args])

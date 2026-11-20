@@ -63,6 +63,17 @@ export function deriveSurface(source) {
     const tail = within('sectionsReturn', source.slice(promoted.index, promoted.index + 6000),
       new RegExp(`return ((?:[\\w$]+\\[\\d+\\]!==[\\w$]+\\|\\|)*[\\w$]+\\[\\d+\\]!==[\\w$]+)\\?\\(([\\w$]+)=([\\w$]+)\\(([\\w$]+),\\{children:\\[([\\w$]+),${escaped},([\\w$]+),([\\w$]+)\\]\\}\\)`));
     if (tail) out.sectionsReturn = tail[0];
+  } else if (!inline.length && !compiled.length && /\{id:"promoted",items:[\w$]+\.promoted,title:[\w$]+\?\.promotedSectionTitle\},\{id:"pinned-others",/.test(source)) {
+    // From 3.31 the picker lists its sections as {id, items, title} entries
+    // that one renderer draws; the patch adds entries and needs only the jsx
+    // function of a renderer for a section's trailing label.
+    const lists = [...source.matchAll(/\{id:"promoted",items:([\w$]+)\.promoted,title:[\w$]+\?\.promotedSectionTitle\},\{id:"pinned-others",/g)];
+    const renderers = [...source.matchAll(/([\w$]+)\([\w$]+\.Section,\{(?:title:([\w$]+)\.title|group:([\w$]+)),trailing:([\w$]+)\.id==="promoted"\?/g)];
+    out.sectionLists = lists.length;
+    out.sectionRenderers = renderers.length;
+    if (lists.length !== 2) problems.push(`sectionLists: ${lists.length} matches`);
+    if (renderers.length !== 2) problems.push(`sectionRenderers: ${renderers.length} matches`);
+    if (renderers[0]) out.jsx = renderers[0][1];
   } else problems.push(`promotedAnchor: ${inline.length} inline and ${compiled.length} compiled matches`);
 
   // Default model list mapping that is persisted afterwards
@@ -72,7 +83,7 @@ export function deriveSurface(source) {
   // Local agent run gate
   // Up to 3.22 the local mode is also passed into the run options; from 3.24
   // only the branch checks it. The anchor keeps whichever form the build has.
-  const run = unique('run', /async run\(([\w$,]+)\)\{const ([\w$]+)=([\w$]+)\(u,\{isRunningInTest:u\.isRunningInTest\?\?this\.environmentService\.enableSmokeTestDriver===!0(?:,localMode:([\w$]+)\.localMode)?\}\);if\(([\w$]+)\.localMode\)\{/g);
+  const run = unique('run', /async run\(([\w$,]+)\)\{const ([\w$]+)=([\w$]+)\(u,\{isRunningInTest:u\.isRunningInTest\?\?this\.environmentService\.enableSmokeTestDriver===!0(?:,localMode:([\w$]+)\.localMode)?\}\);if\((?:[\w$]+\.releaseAfterSend\([\w$]+\.conversationId\),)?([\w$]+)\.localMode\)\{/g);
   if (run) {
     if (run[4] !== undefined && run[4] !== run[5]) problems.push('run: the options and the branch read different local-mode flags');
     Object.assign(out, {runAnchor: run[0], runLocalVar: run[2], runFn: run[3], localMode: run[5]});

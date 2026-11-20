@@ -104,3 +104,18 @@ test('Max mode keeps the chosen Antigravity effort', async () => {
   assert.equal(solve({...model, name:'gpt-5'}, [], true), 'native');
   assert.throws(() => patchMaxMode('function x(){}'), /not unique/);
 });
+
+test('XHigh folds into the model as a fourth effort (Gemini 4 Neon and Hydrogen)', () => {
+  const [neon] = parseModelList(['gemini-4-neon-high\tGemini 4 Neon (High)', 'gemini-4-neon-xhigh\tGemini 4 Neon (XHigh)',
+    'gemini-4-neon-medium\tGemini 4 Neon (Medium)', 'gemini-4-neon-low\tGemini 4 Neon (Low)'].join('\n'));
+  assert.equal(neon.id, 'gemini-4-neon');
+  assert.equal(neon.name, 'Gemini 4 Neon');
+  assert.deepEqual(Object.keys(neon.slugs).sort(), ['high', 'low', 'medium', 'xhigh']);
+  assert.equal(slugFor(neon, 'xhigh'), 'gemini-4-neon-xhigh');
+  assert.equal(slugFor(neon, 'max'), 'gemini-4-neon-xhigh');
+  const [argon] = sampleCatalog;
+  assert.equal(slugFor(argon, 'xhigh'), 'gemini-4-argon-high', 'models without XHigh take High');
+  const [picker] = pickerModels([neon]);
+  assert.deepEqual(picker.parameterDefinitions[0].parameterType.enumParameter.values.map(v => [v.value, v.displayName]),
+    [['low', 'Low'], ['medium', 'Medium'], ['high', 'High'], ['xhigh', 'Very high']]);
+});

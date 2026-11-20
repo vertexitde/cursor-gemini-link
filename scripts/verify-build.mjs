@@ -73,7 +73,12 @@ function verifyWorkbenchWiring(content, surface) {
   assert.deepEqual(grouped.mercury.map(m => m.name), ['inception-mercury/mercury-2.5']);
   assert.deepEqual(grouped.promoted.map(m => m.name), ['gpt-5']);
   assert.equal(grouped.claude.length + grouped.chatgpt.length, 2);
-  assert.ok(content.includes(`${s.modelsVar}.antigravity.length>0&&${s.jsx}(${s.fmt},{models:${s.modelsVar}.antigravity,title:"Antigravity",renderModel:${s.renderModel}},"antigravity-models")`), 'Antigravity section rendered');
+  // From 3.31 the section is an entry in both picker lists, drawn by renderers
+  // that also show an entry's own trailing label.
+  if (s.sectionLists) {
+    assert.equal(content.match(/\{id:"antigravity-models",items:[\w$]+\.antigravity\?\?\[\],title:"Antigravity"\}/g)?.length, 2, 'Antigravity section listed in both views');
+    assert.equal(content.split('/*cursor-links: section trailing*/').length - 1, 2, 'both section renderers read an entry trailing label');
+  } else assert.ok(content.includes(`${s.modelsVar}.antigravity.length>0&&${s.jsx}(${s.fmt},{models:${s.modelsVar}.antigravity,title:"Antigravity",renderModel:${s.renderModel}},"antigravity-models")`), 'Antigravity section rendered');
   assert.match(content, /getAvailableDefaultModels\(\)\{return __withAntigravityModels\(/, 'default models include Antigravity');
   assert.ok(content.includes(`${s.mapVar}=__withAntigravityModels(`), 'mapped models include Antigravity');
   const params = s.runAnchor.match(/^async run\(([\w$,]+)\)/)[1].split(',');

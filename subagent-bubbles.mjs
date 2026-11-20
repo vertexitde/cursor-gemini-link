@@ -22,8 +22,12 @@ export function patchSubagentBubbles(source, surface, symbols) {
   const desktop = surface === 'desktop';
   if (!desktop && surface !== 'glass') throw new Error('Unknown workbench surface');
   const request = desktop ? 'e' : 't', parent = desktop ? 't' : 'e';
-  const anchor = 'async _waitForParentTaskBubbleIfPossible('+request+'){const '+parent+'='+symbols.trim+'('+request+'.parentConversationId),n='+symbols.trim+'('+request+'.toolCallId);if(!'+parent+'||!n)return;const i=this._composerDataService.getHandleIfLoaded('+parent+');';
-  if (source.split(anchor).length !== 2) throw new Error('Subagent bubble anchor is not unique: '+surface);
-  const call = '__ensureAntigravityTaskBubble(this._composerDataService,'+request+',i,'+symbols.taskV2+'.TASK_V2,'+symbols.taskV2Params+','+symbols.toolFormer+'.TOOL_FORMER);';
+  // The locals rotate between builds (the bubble handle is i up to 3.25 and n
+  // from 3.31), so they are read from the method instead of written in.
+  const name = value => value.replace(/\$/g, '\\$');
+  const matches = [...source.matchAll(new RegExp('async _waitForParentTaskBubbleIfPossible\\(([\\w$]+)\\)\\{const ([\\w$]+)='+name(symbols.trim)+'\\(\\1\\.parentConversationId\\),([\\w$]+)='+name(symbols.trim)+'\\(\\1\\.toolCallId\\);if\\(!\\2\\|\\|!\\3\\)return;const ([\\w$]+)=this\\._composerDataService\\.getHandleIfLoaded\\(\\2\\);', 'g'))];
+  if (matches.length !== 1) throw new Error('Subagent bubble anchor is not unique: '+surface);
+  const [anchor, caller, , , handle] = matches[0];
+  const call = '__ensureAntigravityTaskBubble(this._composerDataService,'+caller+','+handle+','+symbols.taskV2+'.TASK_V2,'+symbols.taskV2Params+','+symbols.toolFormer+'.TOOL_FORMER);';
   return ensureAntigravityTaskBubble.toString().replace('function ensureAntigravityTaskBubble','function __ensureAntigravityTaskBubble')+'\n'+source.replace(anchor,()=>anchor+call);
 }

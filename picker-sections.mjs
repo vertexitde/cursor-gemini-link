@@ -8,6 +8,8 @@ export const mercuryPickerSectionHelpersSrc='var __withSubscriptionPickerSection
 
 export const pickerSectionHelpersSrc='var __withSubscriptionPickerSections=function(g){const claude=[],chatgpt=[],mercury=[],antigravity=[];const rest=function(list){const out=[];for(const m of list||[]){const n=m&&m.name;if(typeof n==="string"&&n.startsWith("claude-subscription/"))claude.push(m);else if(typeof n==="string"&&n.startsWith("chatgpt-codex/"))chatgpt.push(m);else if(typeof n==="string"&&n.startsWith("inception-mercury/"))mercury.push(m);else if(typeof n==="string"&&n.startsWith("antigravity/"))antigravity.push(m);else out.push(m)}return out};return{leading:rest(g.leading),promoted:rest(g.promoted),others:rest(g.others),claude,chatgpt,mercury,antigravity}};';
 
+import {insertListSections} from './section-list.mjs';
+
 export function withSubscriptionPickerSections(g) {
   return new Function(pickerSectionHelpersSrc + 'return __withSubscriptionPickerSections;')()(g);
 }
@@ -57,8 +59,8 @@ export function patchPickerSections(source, once, symbols) {
   }
   if (!source.includes('"antigravity-models"')) {
     const section = modelsVar + '.antigravity.length>0&&' + jsx + '(' + fmt + ',{models:' + modelsVar + '.antigravity,title:"Antigravity",renderModel:' + renderModel + '},"antigravity-models")';
-    source = promotedAnchor
-      ? once(source, promotedAnchor, section + ',' + promotedAnchor)
+    source = symbols.sectionLists ? insertListSections(source, group => [`{id:"antigravity-models",items:${group}.antigravity??[],title:"Antigravity"}`])
+      : promotedAnchor ? once(source, promotedAnchor, section + ',' + promotedAnchor)
       : insertCompiledSection(source, once, symbols, section);
   }
   return source;
