@@ -68,7 +68,7 @@ npm run restore
 
 ## Remote sessions
 
-As with the companions, a Remote-SSH window runs the agent on the host, and the installer adds a reverse forward for port `43190` to the shared block in `~/.ssh/config`. `agy` itself keeps running on this machine. `npm run install:remote -- <host>` carries the runtime repairs to a host, and hosts that already have them are updated by every local install.
+As with the companions, a Remote-SSH window runs the agent on the host, and the installer adds a reverse forward for port `43190` to the shared block in `~/.ssh/config`. `agy` itself keeps running on this machine. `npm run install:remote -- <host>` carries the runtime repairs to a host, and hosts that already have them are updated by every local install. The links can be installed on a host in any order; `--restore --all-links` restores the original files for all of them at once.
 
 ## After a Cursor update
 
