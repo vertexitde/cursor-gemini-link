@@ -31,7 +31,7 @@ There is nothing to configure in Cursor: `agy` uses your Antigravity sign-in.
 
 ### Limits
 
-- Each turn is one `agy` run. Answers arrive in one piece, not token by token, and `agy` adds about 12K tokens of its own instructions to every turn, which Cursor counts as context.
+- Each turn is one `agy` run. Answers arrive in one piece, not token by token: with `--json-schema`, `agy` sends the answer only as its final result, and without it the models drop the JSON format. The bridge streams the reply as soon as `agy` sends text deltas. Also, and `agy` adds about 12K tokens of its own instructions to every turn, which Cursor counts as context.
 - Context windows are not reported by `agy`. Gemini models are listed with 1M, GPT-OSS 120B with 128K and anything else with a conservative 200K.
 - Whether Google permits starting `agy` from another program under its terms is not settled publicly. This project only starts the official binary as a local process and never touches Antigravity credentials, which is the boundary discussed on Google's developer forum. Use it at your own discretion.
 

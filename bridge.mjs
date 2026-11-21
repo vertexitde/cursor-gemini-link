@@ -6,6 +6,7 @@ import crypto from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {providerModels} from './models.mjs';
 import {AgyError, infer, discoverModels, findAgy, newCallId} from './agy.mjs';
+import {chunkWriter} from './stream-text.mjs';
 
 const maxBody = 64 * 1024 * 1024;
 
@@ -73,17 +74,22 @@ async function chat(request, response, state) {
   }
   const abort = new AbortController();
   response.on('close', () => { if (!response.writableFinished) abort.abort(); });
-  let keepAlive;
+  let keepAlive, writer;
   if (body.stream) {
-    // agy answers in one piece; comments keep the connection open meanwhile.
+    // The reply streams as agy writes it; comments keep the connection open
+    // while it is quiet.
     response.writeHead(200, {'content-type':'text/event-stream', 'cache-control':'no-cache', connection:'keep-alive'});
     keepAlive = setInterval(() => response.write(': waiting for Antigravity\n\n'), 10000);
+    writer = chunkWriter(chunk => { if (!response.destroyed) response.write('data: ' + JSON.stringify(chunk) + '\n\n'); },
+      {id:'chatcmpl-' + crypto.randomBytes(12).toString('hex'), object:'chat.completion.chunk', created:Math.floor(Date.now() / 1000), model:body.model});
+    writer.start();
   }
   try {
-    const {answer, usage} = await state.infer(state.agy, body, await state.catalog(), {signal:abort.signal});
+    const onProgress = writer && (({kind, delta}) => kind === 'reasoning' ? writer.reasoning(delta) : writer.text(delta));
+    const {answer, usage} = await state.infer(state.agy, body, await state.catalog(), {signal:abort.signal, onProgress});
     const result = completion(body, answer, usage);
     if (!body.stream) return send(response, 200, result);
-    for (const chunk of streamChunks(body, result)) response.write('data: ' + JSON.stringify(chunk) + '\n\n');
+    writer.finish(result, body.stream_options?.include_usage);
     response.end('data: [DONE]\n\n');
   } catch (error) {
     if (!body.stream || error?.name === 'AbortError') throw error;

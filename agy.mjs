@@ -12,6 +12,7 @@ import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import {spawn, execFile} from 'node:child_process';
+import {textStreamer} from './stream-text.mjs';
 import {prefix, parseModelList, findModel, slugFor} from './models.mjs';
 
 export class AgyError extends Error {
@@ -151,7 +152,7 @@ export function parseEvents(stdout) {
   return {answer, usage:result.usage ?? {}, steps};
 }
 
-export async function infer(agy, body, catalog, {signal, spawnProcess = spawn} = {}) {
+export async function infer(agy, body, catalog, {signal, spawnProcess = spawn, onProgress} = {}) {
   const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'cursor-antigravity-'));
   try {
     const request = prepareRequest(body, catalog, workspace);
@@ -164,7 +165,7 @@ export async function infer(agy, body, catalog, {signal, spawnProcess = spawn} =
     // a moment; one more try after a short wait covers that.
     let stdout;
     for (let attempt = 1; ; attempt++) {
-      try { stdout = await runAgy(agy, args, workspace, input, signal, spawnProcess); break; }
+      try { stdout = await runAgy(agy, args, workspace, input, signal, spawnProcess, onProgress && answerStream(onProgress)); break; }
       catch (error) {
         if (error.code !== 'agy_start_failed' || attempt === 2) throw error;
         await new Promise(resolve => setTimeout(resolve, 1500));
@@ -177,13 +178,34 @@ export async function infer(agy, body, catalog, {signal, spawnProcess = spawn} =
   }
 }
 
-function runAgy(agy, args, workspace, input, signal, spawnProcess) {
+// The reply streams from agy's text deltas while it writes its JSON answer;
+// each new response step starts a new attempt at that JSON.
+function answerStream(onProgress) {
+  const streamer = textStreamer(delta => onProgress({kind:'text', delta}));
+  let step;
+  return line => {
+    let event; try { event = JSON.parse(line); } catch { return; }
+    const update = event?.event === 'step_update' ? event.step_update : undefined;
+    if (update?.step_type !== 'agent_response' || typeof update.text_delta !== 'string') return;
+    if (update.step_index !== step) { step = update.step_index; streamer.restart(); }
+    streamer.push(update.text_delta);
+  };
+}
+
+function runAgy(agy, args, workspace, input, signal, spawnProcess, onLine) {
   return new Promise((resolve, reject) => {
     const child = spawnProcess(agy, args, {cwd:workspace, windowsHide:true});
     let out = '', err = '';
     const stop = () => child.kill();
     signal?.addEventListener('abort', stop, {once:true});
-    child.stdout.on('data', chunk => { out += chunk; });
+    let pending = '';
+    child.stdout.on('data', chunk => {
+      out += chunk;
+      if (!onLine) return;
+      pending += chunk;
+      const lines = pending.split(/\r?\n/); pending = lines.pop();
+      for (const line of lines) if (line.trim()) onLine(line);
+    });
     child.stderr.on('data', chunk => { err = (err + chunk).slice(-4000); });
     child.on('error', error => reject(new AgyError(502, `Could not start the Antigravity CLI: ${error.message} (binary ${fs.existsSync(agy) ? 'present' : 'missing'}, working folder ${fs.existsSync(workspace) ? 'present' : 'missing'})`, 'agy_start_failed')));
     child.on('close', code => {
