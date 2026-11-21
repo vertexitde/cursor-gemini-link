@@ -7,7 +7,7 @@ Updated on October 16, 2026.
 | Component | Version |
 | --- | --- |
 | Operating system | Windows 11, x64 |
-| Cursor | 3.31.12, commit `61ea52f088708259885abd9a37eafec994cd5db0` (also reviewed: 3.25.9 and 3.24.12) |
+| Cursor | 3.31.17, commit `0c888adc18cbde5c1f61c0debd304de2cdaf23a0` (also reviewed: 3.31.12, 3.25.9 and 3.24.12) |
 | Antigravity CLI | `agy` 1.4.0, personal Google account |
 | Node.js | 26.8.1 |
 | Companion patches | cursor-gpt-link, cursor-claude-link and cursor-mercury-link for the same build |
@@ -33,6 +33,8 @@ The Gemini CLI (0.64.0) signed in with a personal Google account is refused with
 
 `agy models` on November 20, 2026 adds Gemini 4 Neon and Gemini 4 Hydrogen with a fourth effort, `xhigh`, and two orchestrators (`gemini-pro-orchestrator-neon`, `gemini-pro-orchestrator-g1-pro`). Neon at XHigh and Hydrogen at Medium answered through the runner; the Neon orchestrator returned a correct `read_file` call in about 32 seconds.
 
+Cursor 3.31.17 is a patch release of 3.31.12. Every patched bundle changed, but only minified names rotated: the symbols were re-derived without problems, and all automated checks pass on the original 3.31.17 build.
+
 Cursor 3.31.12 (3.26 to 3.30 were skipped) is again supported through its symbol table and file hashes, but it moved a lot. The model picker now builds its sections as a list of `{id, items, title}` entries, once for the menu and once for the grouped view; each link adds its entry before the pinned models, so the order follows the install order, and both renderers learned to show an entry's own trailing label for the usage. The local-mode branch also releases the send slot (`if(x.releaseAfterSend(…),go.localMode)`), the Plan & Usage card is a plain component whose children are expressions, and several minified locals rotated (the local model in the subagent catalog, the Task bubble handle, the cancel locals, the transcript cache). The agent host is now enabled by `_topologyEnabled`, which also covers private inference and Cursor Orbit; the links keep windows on the classic path there too. The runtime bundles are down-levelled again (`Object.assign`), and the user message rebuild moved behind the thread resolution. The extractor reproduced the reviewed 3.25.9 and 3.24.12 symbols before it was used here, and the checks now find methods by parsing and resolve new helpers to inert stubs. All automated checks pass on 3.31.12, and 3.25.9, 3.24.12 and 3.22.12 still verify.
 
 ## Automated checks
@@ -43,6 +45,7 @@ Cursor 3.31.12 (3.26 to 3.30 were skipped) is again supported through its symbol
 
 | Build | Standalone | Combined |
 | --- | --- | --- |
+| 3.31.17 | Passes | See below |
 | 3.31.12 | Passes | See below |
 | 3.25.9 | Passes | Passes |
 | 3.24.12 | Passes | Not run |
