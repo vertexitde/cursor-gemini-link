@@ -9,7 +9,7 @@ import os from 'node:os';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
-import {patchWorkbench, patchRuntime, providerConfigBranch, antigravityReasoningBranch} from '../patches.mjs';
+import {patchWorkbench, patchRuntime, patchUi, uiRelative, providerConfigBranch, antigravityReasoningBranch} from '../patches.mjs';
 import {pickerSectionHelpersSrc} from '../picker-sections.mjs';
 import {prefix, providerModels} from '../models.mjs';
 import {sampleCatalog} from './checks/sample-models.mjs';
@@ -36,9 +36,9 @@ const config = {port:43190, key:'0'.repeat(64)};
 function bundleFiles(dir) {
   if (fs.existsSync(path.join(dir, '0-workbench.desktop.main.js'))) return {
     desktop:path.join(dir, '0-workbench.desktop.main.js'), glass:path.join(dir, '1-workbench.glass.main.js'),
-    exec:path.join(dir, '2-main.js'), runtime:path.join(dir, '3-main.js')};
+    exec:path.join(dir, '2-main.js'), runtime:path.join(dir, '3-main.js'), ui:path.join(dir, '6-workbench.anysphere-ui.js')};
   return {desktop:path.join(dir, 'out/vs/workbench/workbench.desktop.main.js'), glass:path.join(dir, 'out/vs/workbench/workbench.glass.main.js'),
-    exec:path.join(dir, 'extensions/cursor-agent-exec/dist/main.js'), runtime:path.join(dir, 'extensions/cursor-local-agent-runtime/dist/main.js')};
+    exec:path.join(dir, 'extensions/cursor-agent-exec/dist/main.js'), runtime:path.join(dir, 'extensions/cursor-local-agent-runtime/dist/main.js'), ui:path.join(dir, uiRelative)};
 }
 
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'cursor-gemini-link-verify-'));
@@ -63,8 +63,8 @@ async function verifyProviderConfig(content) {
   assert.equal(await config({modelId:'claude-subscription/opus'}, {}), 'native', 'other models untouched');
 }
 
-function verifyWorkbenchWiring(content, surface) {
-  const s = symbols[surface];
+// The picker: on the surfaces up to 3.31, in the shared UI module from 3.32.
+function verifyPicker(content, s) {
   assert.ok(content.includes(pickerSectionHelpersSrc), 'four-provider picker helper present');
   assert.ok(!content.includes('const claude=[],chatgpt=[],mercury=[];') && !content.includes('const claude=[],chatgpt=[];'), 'no older helper copy left');
   const helper = new Function(pickerSectionHelpersSrc + 'return __withSubscriptionPickerSections;')();
@@ -79,6 +79,11 @@ function verifyWorkbenchWiring(content, surface) {
     assert.equal(content.match(/\{id:"antigravity-models",items:[\w$]+\.antigravity\?\?\[\],title:"Antigravity"\}/g)?.length, 2, 'Antigravity section listed in both views');
     assert.equal(content.split('/*cursor-links: section trailing*/').length - 1, 2, 'both section renderers read an entry trailing label');
   } else assert.ok(content.includes(`${s.modelsVar}.antigravity.length>0&&${s.jsx}(${s.fmt},{models:${s.modelsVar}.antigravity,title:"Antigravity",renderModel:${s.renderModel}},"antigravity-models")`), 'Antigravity section rendered');
+}
+
+function verifyWorkbenchWiring(content, surface) {
+  const s = symbols[surface];
+  if (!symbols.ui) verifyPicker(content, s);
   assert.match(content, /getAvailableDefaultModels\(\)\{return __withAntigravityModels\(/, 'default models include Antigravity');
   assert.ok(content.includes(`${s.mapVar}=__withAntigravityModels(`), 'mapped models include Antigravity');
   const params = s.runAnchor.match(/^async run\(([\w$,]+)\)/)[1].split(',');
@@ -140,11 +145,18 @@ async function scenario(label, dir) {
     if (atLeast(version, '3.24.12')) verifyAgentHost(content);
     await verifyProviderConfig(content);
     console.log(`${label} ${surface}: syntax, unique anchors, picker and provider configuration passed.`);
-    verifyMaxMode(content);
+    if (!symbols.ui) verifyMaxMode(content);
     await verifySubagentRegistration(content);
     await verifySubagentLifecycle(content, registry(content, '__subscriptionSubagentPrefixes'));
     await verifyConversationActionsWorkbench(content, registry(content, '__subscriptionActionPrefixes'));
     await verifyWorkbenchRouting(content, undefined, {remoteTunnel});
+  }
+  if (symbols.ui) {
+    const content = patchUi(fs.readFileSync(files.ui, 'utf8'), symbols.ui, config, sampleCatalog);
+    syntax(`${label}-ui`, content);
+    verifyPicker(content, symbols.ui);
+    verifyMaxMode(content);
+    console.log(`${label} ui: syntax, picker sections and Max mode passed.`);
   }
   for (const name of ['exec', 'runtime']) {
     const content = patchRuntime(fs.readFileSync(files[name], 'utf8'));

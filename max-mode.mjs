@@ -7,6 +7,8 @@ export function antigravityVariant(model, parameters) {
     ?? model.variants.find(v => v.isDefaultNonMaxConfig) ?? model.variants[0];
 }
 
+// From 3.32 the solver lives in workbench.anysphere-ui.js, not in the surfaces.
+export const hasMaxModeSolver = source => /function [\w$]+\(([\w$]+),[\w$]+,([\w$]+)\)\{if\(\1\.variants\.length===0\|\|!\2&&\1\.supportsNonMaxMode===!1\)return;/.test(source);
 export function patchMaxMode(source) {
   const matches = [...source.matchAll(/function ([\w$]+)\(([\w$]+),([\w$]+),([\w$]+)\)\{if\(\2.variants.length===0\|\|!\4&&\2.supportsNonMaxMode===!1\)return;/g)];
   if (matches.length !== 1) throw new Error('Max-mode variant solver anchor is not unique');

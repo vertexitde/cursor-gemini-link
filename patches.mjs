@@ -4,7 +4,7 @@ import {patchSubagentLifecycle} from './subagent-lifecycle.mjs';
 import {patchConversationActionsWorkbench, patchConversationActionsRuntime} from './conversation-actions.mjs';
 import {patchSubagentModel} from './subagent-model.mjs';
 import {patchSubagentSettingsWorkbench, patchSubagentSettingsRuntime} from './subagent-settings.mjs';
-import {patchMaxMode} from './max-mode.mjs';
+import {patchMaxMode, hasMaxModeSolver} from './max-mode.mjs';
 import {patchAgentHost} from './agent-host.mjs';
 import {pickerModels, prefix} from './models.mjs';
 
@@ -39,6 +39,15 @@ export function providerConfigBranch(modelExpression) {
   return `if(__isAntigravityModel(${modelExpression}))return{baseUrl:__antigravityBridgeBase+"/v1",apiKey:__antigravityBridgeKey,customHeaders:{}};`;
 }
 
+// From 3.32 the model picker and the Max-mode solver live in
+// workbench.anysphere-ui.js, a module both surfaces import. It gets the same
+// prelude as the surfaces.
+export const uiRelative = 'out/vs/workbench/workbench.anysphere-ui.js';
+export function patchUi(source, ui, config, catalog) {
+  if (source.includes('const __antigravityBridgeBase=')) throw new Error('Patch marker already present in the UI module.');
+  return patchMaxMode(patchPickerSections(workbenchPrelude(config, catalog) + source, once, ui));
+}
+
 export function patchWorkbench(source, surface, symbols, config, catalog, {remoteTunnel = false} = {}) {
   if (!['desktop', 'glass'].includes(surface)) throw new Error('Unknown workbench surface: ' + surface);
   // The declaration, not the name: a companion's picker section may mention
@@ -46,7 +55,8 @@ export function patchWorkbench(source, surface, symbols, config, catalog, {remot
   if (source.includes('const __antigravityBridgeBase=')) throw new Error('Antigravity patch marker already present.');
   const s = symbols;
   source = workbenchPrelude(config, catalog) + source;
-  source = patchPickerSections(source, once, s);
+  // From 3.32 the picker is in workbench.anysphere-ui.js (patchUi).
+  if (s.groupReturn) source = patchPickerSections(source, once, s);
 
   // The default model list, possibly already wrapped by cursor-gpt-link or cursor-claude-link.
   const getter = onlyMatch(source, /getAvailableDefaultModels\(\)\{return ?((?:__with[\w$]+\()*\[\.\.\.this\._availableDefaultModels\(\)\]\)*)\}/g, 'Default model getter');
@@ -84,7 +94,8 @@ export function patchWorkbench(source, surface, symbols, config, catalog, {remot
     if (source.includes(s.activation)) source = once(source, s.activation, s.activation.replace('return ', 'return typeof __antigravityBridgeBase==="string"||'));
   }
 
-  source = patchMaxMode(patchSubagentSettingsWorkbench(source));
+  source = patchSubagentSettingsWorkbench(source);
+  if (hasMaxModeSolver(source)) source = patchMaxMode(source);
   source = patchSubagentBubbles(source, surface, s);
   source = patchSubagentLifecycle(source, surface, prefix, s);
   source = patchAgentHost(patchConversationActionsWorkbench(source, surface, prefix));

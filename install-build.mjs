@@ -9,7 +9,7 @@ import {cursorRoot, requireSupportedOriginals, sha256, isTunnelled} from './buil
 import {applyToDisk, readBlock, sshConfigPath} from './ssh-forwarding.mjs';
 import {syncKnownHosts} from './remote-runtime.mjs';
 import {link as remoteLink, marker as remoteMarker, prefix as remotePrefix, patchRuntime as remotePatchRuntime} from './runtime-link.mjs';
-import {patchWorkbench, patchRuntime} from './patches.mjs';
+import {patchWorkbench, patchRuntime, patchUi, uiRelative} from './patches.mjs';
 import {buildAutostart} from './autostart.mjs';
 import {findAgy, discoverModels} from './agy.mjs';
 
@@ -79,6 +79,7 @@ const productPath = path.join(root, 'product.json');
 const product = JSON.parse(fs.readFileSync(productPath, 'utf8'));
 product.checksums['vs/workbench/workbench.desktop.main.js'] = crypto.createHash('sha256').update(pending[0].content).digest('base64').replace(/=+$/, '');
 pending.push({path:productPath, content:JSON.stringify(product, null, 2)});
+if (symbols.ui) { const target = path.join(root, uiRelative); pending.push({path:target, content:patchUi(fs.readFileSync(target, 'utf8'), symbols.ui, config, catalog)}); }
 
 const backupDir = path.join(dir, 'backups', version + '-' + Date.now());
 fs.mkdirSync(backupDir, {recursive:true});
