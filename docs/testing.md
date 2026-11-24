@@ -7,7 +7,7 @@ Updated on October 16, 2026.
 | Component | Version |
 | --- | --- |
 | Operating system | Windows 11, x64 |
-| Cursor | 3.32.1, commit `ac14a3354228b109d5c406520b0f946a9954afd0` (also reviewed: 3.31.17, 3.31.12, 3.25.9 and 3.24.12) |
+| Cursor | 3.32.4, commit `0925c4b8226c56947c43f0b555fb98e187a7e020` (also reviewed: 3.32.1, 3.31.17, 3.31.12, 3.25.9 and 3.24.12) |
 | Antigravity CLI | `agy` 1.4.0, personal Google account |
 | Node.js | 26.8.1 |
 | Companion patches | cursor-gpt-link, cursor-claude-link and cursor-mercury-link for the same build |
@@ -33,6 +33,8 @@ The Gemini CLI (0.64.0) signed in with a personal Google account is refused with
 
 `agy models` on November 20, 2026 adds Gemini 4 Neon and Gemini 4 Hydrogen with a fourth effort, `xhigh`, and two orchestrators (`gemini-pro-orchestrator-neon`, `gemini-pro-orchestrator-g1-pro`). Neon at XHigh and Hydrogen at Medium answered through the runner; the Neon orchestrator returned a correct `read_file` call in about 32 seconds.
 
+Cursor 3.32.4 is a patch release of 3.32.4. Every patched bundle changed, but only minified names rotated: the symbols were re-derived without problems (the extractor reproduces the reviewed 3.32.4 symbols), and all automated checks pass on the original 3.32.4 build and on top of the companions.
+
 Cursor 3.32.1 split the workbench into ES modules. The model picker (its sections and grouping) and the Max-mode solver moved into `workbench.anysphere-ui.js`, a module both surfaces import, so that file is now patched as well: once, with the picker sections and the Max-mode branch, and with the same prelude as the surfaces. The settings pages were rebuilt from parts (`SettingsSection` and `SettingsRow`); the links draw their cards (subscription usage, the Inception key) through a small adapter onto those parts, so the same card code serves older builds. The run gate swapped its minified option names, which the extractor now reads instead of assuming. All automated checks pass on the original 3.32.1 build and on top of the companions, and 3.31.17 still verifies.
 
 Cursor 3.31.17 is a patch release of 3.31.12. Every patched bundle changed, but only minified names rotated: the symbols were re-derived without problems, and all automated checks pass on the original 3.31.17 build.
@@ -47,6 +49,7 @@ Cursor 3.31.12 (3.26 to 3.30 were skipped) is again supported through its symbol
 
 | Build | Standalone | Combined |
 | --- | --- | --- |
+| 3.32.4 | Passes | See below |
 | 3.32.1 | Passes | See below |
 | 3.31.17 | Passes | See below |
 | 3.31.12 | Passes | See below |

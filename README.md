@@ -9,11 +9,11 @@ Companion projects: [cursor-gpt-link](https://github.com/vertexitde/cursor-gpt-l
 | Item | Current status |
 | --- | --- |
 | Client platform | Windows x64 |
-| Supported Cursor | 3.32.1, commit `ac14a3354228b109d5c406520b0f946a9954afd0`; 3.31.17, commit `0c888adc18cbde5c1f61c0debd304de2cdaf23a0`; 3.31.12, commit `61ea52f088708259885abd9a37eafec994cd5db0`; 3.25.9, commit `5d4df965746c5d09740842fc0f1331ba1c157830`; 3.24.12, commit `37b865941ccb31e2fc90c685157534efca87f960` |
+| Supported Cursor | 3.32.4, commit `0925c4b8226c56947c43f0b555fb98e187a7e020`; 3.32.1, commit `ac14a3354228b109d5c406520b0f946a9954afd0`; 3.31.17, commit `0c888adc18cbde5c1f61c0debd304de2cdaf23a0`; 3.31.12, commit `61ea52f088708259885abd9a37eafec994cd5db0`; 3.25.9, commit `5d4df965746c5d09740842fc0f1331ba1c157830`; 3.24.12, commit `37b865941ccb31e2fc90c685157534efca87f960` |
 | Antigravity CLI | `agy` 1.4.0, signed in with a personal Google account |
 | Models | Read from `agy models` at install time and again whenever the bridge starts |
 | Through `agy`, verified live on October 16, 2026 | Gemini 4 Argon at Low, Medium and High; structured tool calls; a full tool round trip; images through the working folder |
-| Automated checks | Unit tests, and Cursor's extracted code with the patch applied on the original 3.32.1, 3.31.17, 3.31.12, 3.25.9 and 3.24.12 bundles |
+| Automated checks | Unit tests, and Cursor's extracted code with the patch applied on the original 3.32.4, 3.32.1, 3.31.17, 3.31.12, 3.25.9 and 3.24.12 bundles |
 | Combined install | On top of cursor-gpt-link, cursor-claude-link and cursor-mercury-link; see [testing notes](docs/testing.md) |
 | In-app use | Not yet confirmed in the Cursor UI |
 

@@ -81,7 +81,22 @@ function verifyPicker(content, s) {
   } else assert.ok(content.includes(`${s.modelsVar}.antigravity.length>0&&${s.jsx}(${s.fmt},{models:${s.modelsVar}.antigravity,title:"Antigravity",renderModel:${s.renderModel}},"antigravity-models")`), 'Antigravity section rendered');
 }
 
+
+// Every link in the run gate reads the request through the run's own
+// parameters. A fixed name (Mercury's "u" up to 3.32) became a local declared
+// after the gate and threw on every request, whatever the model.
+function verifyRunGate(content) {
+  const gate = content.match(/async run\(([\w$,]+)\)\{const __(?:chatgpt|claude|mercury|antigravity|kimi)Local=([^;]+);/);
+  assert.ok(gate, 'run gate found');
+  const params = gate[1].split(',');
+  const reads = [...gate[2].matchAll(/\(([\w$]+)\?\.requestedModel\?\.modelId\?\?([\w$]+)\?\.modelId\)/g)];
+  assert.ok(reads.length > 0, 'run gate reads the requested model');
+  for (const [read, options, request] of reads) assert.ok(options === params[10] && request === params[3], 'run gate uses the run parameters: ' + read);
+  assert.equal(reads.length, (gate[2].match(/__is\w+\(/g) ?? []).length, 'every link check in the gate reads the run parameters');
+}
+
 function verifyWorkbenchWiring(content, surface) {
+  verifyRunGate(content);
   const s = symbols[surface];
   if (!symbols.ui) verifyPicker(content, s);
   assert.match(content, /getAvailableDefaultModels\(\)\{return __withAntigravityModels\(/, 'default models include Antigravity');
