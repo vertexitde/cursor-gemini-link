@@ -7,7 +7,7 @@ Updated on October 16, 2026.
 | Component | Version |
 | --- | --- |
 | Operating system | Windows 11, x64 |
-| Cursor | 3.32.4, commit `0925c4b8226c56947c43f0b555fb98e187a7e020` (also reviewed: 3.32.1, 3.31.17, 3.31.12, 3.25.9 and 3.24.12) |
+| Cursor | 3.32.5, commit `94cda5961505b3ddb751f861e6eb5f2e65379db0` (also reviewed: 3.32.4, 3.32.1, 3.31.17, 3.31.12, 3.25.9 and 3.24.12) |
 | Antigravity CLI | `agy` 1.4.0, personal Google account |
 | Node.js | 26.8.1 |
 | Companion patches | cursor-gpt-link, cursor-claude-link and cursor-mercury-link for the same build |
@@ -49,6 +49,7 @@ Cursor 3.31.12 (3.26 to 3.30 were skipped) is again supported through its symbol
 
 | Build | Standalone | Combined |
 | --- | --- | --- |
+| 3.32.5 | Passes | See below |
 | 3.32.4 | Passes | See below |
 | 3.32.1 | Passes | See below |
 | 3.31.17 | Passes | See below |
